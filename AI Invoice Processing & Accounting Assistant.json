@@ -1,0 +1,580 @@
+{
+  "name": "AI Invoice Processing & Accounting Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-processing",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2f7382bf-94aa-4528-85ab-50f1c2e1f0ab",
+      "name": "Webhook",
+      "webhookId": "63066a36-1700-4381-a9c9-2bb16499f978"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f679bf05-aac5-4592-9944-c9636cb5e15b",
+              "name": "invoice_text",
+              "value": "Invoice Number: INV-2026-001  Vendor: Amazon Web Services  Invoice Date: 2026-07-17  Due Date: 2026-08-17  Currency: USD  Subtotal: 250.00  VAT: 50.00  Total: 300.00",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "9d2ecd52-bbe0-450f-8c42-9758209889c4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AQ.Ab8RN6IHa1y_seMikL6-RgZsEVP_203qsMgxp1SzzkaowKNUUw"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"You are an invoice processing assistant.\\n\\nExtract the invoice information below.\\n\\nReturn ONLY valid JSON.\\n\\nRules:\\n- Return dates in YYYY-MM-DD format.\\n- Return all monetary values as numbers (without currency symbols).\\n- Do not include explanations.\\n- Do not use markdown.\\n\\nReturn exactly:\\n\\n{\\n  \\\"invoice_number\\\": \\\"\\\",\\n  \\\"vendor\\\": \\\"\\\",\\n  \\\"invoice_date\\\": \\\"\\\",\\n  \\\"due_date\\\": \\\"\\\",\\n  \\\"currency\\\": \\\"\\\",\\n  \\\"subtotal\\\": 0,\\n  \\\"vat\\\": 0,\\n  \\\"total\\\": 0\\n}\\n\\nInvoice:\\n{{$json.invoice_text}}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "9d5b06e8-7c60-4fc4-9976-2d0588cb6e6e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.candidates[0].content.parts[0].text;\n\nconst invoice = JSON.parse(text);\n\nreturn [\n  {\n    json: invoice\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "d7f4764c-2809-4ce1-83e9-d6be8f91c6f6",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoice = $input.first().json;\n\nconst errors = [];\n\n// Required fields\nif (!invoice.invoice_number) {\n  errors.push(\"Missing invoice number\");\n}\n\nif (!invoice.vendor) {\n  errors.push(\"Missing vendor\");\n}\n\nif (!invoice.invoice_date) {\n  errors.push(\"Missing invoice date\");\n}\n\nif (!invoice.currency) {\n  errors.push(\"Missing currency\");\n}\n\n// Amount validation\nif (typeof invoice.total !== \"number\" || invoice.total <= 0) {\n  errors.push(\"Invalid total amount\");\n}\n\nif (typeof invoice.subtotal !== \"number\" || invoice.subtotal < 0) {\n  errors.push(\"Invalid subtotal\");\n}\n\nif (typeof invoice.vat !== \"number\" || invoice.vat < 0) {\n  errors.push(\"Invalid VAT\");\n}\n\nreturn [\n  {\n    json: {\n      ...invoice,\n      valid: errors.length === 0,\n      errors: errors\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "92918e00-3eb7-48f4-802a-cbbc90e444b1",
+      "name": "Validate Invoice"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ef7a2999-5eb4-4261-883c-df861bbf6149",
+              "leftValue": "={{$json.valid}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "86b49ab3-1236-4b0f-a760-a4ca2292f774",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "tableId": "invoices",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "invoice_number",
+              "fieldValue": "={{$json.invoice_number}}"
+            },
+            {
+              "fieldId": "vendor",
+              "fieldValue": "={{$json.vendor}}"
+            },
+            {
+              "fieldId": "invoice_date",
+              "fieldValue": "={{$json.invoice_date}}"
+            },
+            {
+              "fieldId": "due_date",
+              "fieldValue": "={{$json.due_date}}"
+            },
+            {
+              "fieldId": "currency",
+              "fieldValue": "={{$json.currency}}"
+            },
+            {
+              "fieldId": "subtotal",
+              "fieldValue": "={{$json.subtotal}}"
+            },
+            {
+              "fieldId": "vat",
+              "fieldValue": "={{$json.vat}}"
+            },
+            {
+              "fieldId": "total",
+              "fieldValue": "={{$json.total}}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "7cf44b2c-967f-42fa-9ec2-ad83389d9025",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "en1y77HSvCMUHPbr",
+          "name": "Supabase account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qp3sfQ4LH0ld-m3JzEeHia9LroGL0vUTbPRwrGsW3NQ",
+          "mode": "list",
+          "cachedResultName": "AI Invoice Processing & Accounting Assistant",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qp3sfQ4LH0ld-m3JzEeHia9LroGL0vUTbPRwrGsW3NQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qp3sfQ4LH0ld-m3JzEeHia9LroGL0vUTbPRwrGsW3NQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "invoice_number": "={{$json.invoice_number}}",
+            "vendor": "={{$json.vendor}}",
+            "invoice_date": "={{$json.invoice_date}}",
+            "due_date": "={{$json.due_date}}",
+            "currency": "={{$json.currency}}",
+            "subtotal": "={{$json.subtotal}}",
+            "vat": "={{$json.vat}}",
+            "total": "={{$json.total}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "invoice_number",
+              "displayName": "invoice_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "vendor",
+              "displayName": "vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_date",
+              "displayName": "invoice_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "subtotal",
+              "displayName": "subtotal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "vat",
+              "displayName": "vat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1456,
+        -96
+      ],
+      "id": "39641a54-5538-4fd1-ae84-80bda882e965",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EDdjK8gydvQTsNz3",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bbeksultan811@gmail.com",
+        "subject": "Invoice Processed Successfully",
+        "message": "=Hello,\n\nA new invoice has been processed successfully.\n\nInvoice Number: {{$json.invoice_number}}\n\nVendor: {{$json.vendor}}\n\nInvoice Date: {{$json.invoice_date}}\n\nDue Date: {{$json.due_date}}\n\nCurrency: {{$json.currency}}\n\nSubtotal: {{$json.subtotal}}\n\nVAT: {{$json.vat}}\n\nTotal: {{$json.total}}\n\nThe invoice has been saved to:\n• Supabase\n• Google Sheets\n\nThis is an automated message generated by n8n.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        -96
+      ],
+      "id": "599db59a-8649-4f3c-9a1e-63d29baf8c11",
+      "name": "Send a message",
+      "webhookId": "ba7b46b2-220f-445f-935a-14d0cc2a9ace",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GczTtbnD930Uo9oY",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f641c118-dec0-4b6b-b6ed-762b81560ba5",
+              "name": "success",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "9550a152-34dc-4867-9304-baf8cc6c191c",
+              "name": "message",
+              "value": "message",
+              "type": "string"
+            },
+            {
+              "id": "0c94bac2-c3aa-452f-8ff7-3de1aa098987",
+              "name": "=errors",
+              "value": "={{$json.errors}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        96
+      ],
+      "id": "6f9d48fe-777e-435f-b49e-626e7d1e1251",
+      "name": "Validation Error"
+    },
+    {
+      "parameters": {
+        "sendTo": "bbeksultan811@gmail.com",
+        "subject": "Invoice Processing Failed",
+        "message": "=Invoice processing failed.\n\nValidation errors:\n\n{{$json.errors.join('\\n')}}\n\nPlease review the invoice and try again.\n\nGenerated automatically by n8n.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "9dd6b92a-d349-4734-8ee4-7562d6bc27b6",
+      "name": "Send a message1",
+      "webhookId": "a5219647-7929-47b8-a074-3233bee07464",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GczTtbnD930Uo9oY",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n{\n  success: false,\n  message: \"Invoice validation failed.\",\n  errors: $json.errors\n}\n}}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1664,
+        96
+      ],
+      "id": "c6c26e4d-1f4e-48cf-870c-9da949026a2e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n{\n  success: true,\n  message: \"Invoice processed successfully.\",\n  invoice_number: $json.invoice_number,\n  vendor: $json.vendor,\n  total: $json.total\n}\n}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1872,
+        -96
+      ],
+      "id": "62b511ae-502c-4ef0-a2e6-c51209f0225b",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Validate Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Invoice": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Error": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "721d7728-5e08-4efc-966c-4e8e75f4cfc8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cc2ce1497fea5ef495c4fc759ceafe1145b1ecced76f0b3cadc9843ca9ce88bd"
+  },
+  "nodeGroups": [],
+  "id": "Tvjo3aklmTLw6Wpc",
+  "tags": []
+}
