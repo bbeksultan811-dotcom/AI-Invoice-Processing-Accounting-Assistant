@@ -1,13 +1,5 @@
 # AI Invoice Processing Assistant
 
-<p align="center">
-  <img src="screenshots/workflow.png" width="900">
-</p>
-
-<p align="center">
-AI-powered invoice processing workflow built with <b>n8n</b>, <b>Gemini AI</b>, <b>Supabase</b>, <b>Google Sheets</b>, and <b>Gmail</b>.
-</p>
-
 ---
 
 # Business Problem
@@ -128,13 +120,13 @@ Respond to Webhook
 
 # Screenshots
 
-| Workflow | Gemini Output |
+| Workflow | 
 |-----------|---------------|
-| <img src="screenshots/workflow.png" width="100%"> | <img src="screenshots/gemini-output.png" width="100%"> |
+| <img src="screenshots/workflow3.png" width="100%"> |
 
 | Supabase | Google Sheets |
 |-----------|---------------|
-| <img src="screenshots/supabase-table.png" width="100%"> | <img src="screenshots/google-sheets.png" width="100%"> |
+| <img src="screenshots/supabase-table.png" width="100%"> | <img src="screenshots/google-sheets1.png" width="100%"> |
 
 | Email | Webhook Test |
 |--------|--------------|
