@@ -122,15 +122,15 @@ Respond to Webhook
 
 | Workflow | 
 |-----------|---------------|
-| <img src="screenshots/workflow3.png" width="100%"> |
+| <img src="Screenshots/workflow3.png" width="100%"> |
 
 | Supabase | Google Sheets |
 |-----------|---------------|
-| <img src="screenshots/supabase-table.png" width="100%"> | <img src="screenshots/google-sheets1.png" width="100%"> |
+| <img src="Screenshots/supabase-table.png" width="100%"> | <img src="Screenshots/google-sheets1.png" width="100%"> |
 
 | Email | Webhook Test |
 |--------|--------------|
-| <img src="screenshots/success-email.png" width="100%"> | <img src="screenshots/webhook-test.png" width="100%"> |
+| <img src="Screenshots/success-email.png" width="100%"> | <img src="Screenshots/webhook-test.png" width="100%"> |
 
 ---
 
