@@ -302,4 +302,4 @@ During development the workflow addressed several real-world automation challeng
 
 # Author
 
-Built by **Zvc Qds** as part of an AI Automation Engineering portfolio.
+Built by Farangiz as part of an AI Automation Engineering portfolio.
